@@ -1,0 +1,15 @@
+# aqui vamos configurar o dump com base em permissões
+# de um usuário, o script fará dump de todos os
+# banco que um usuário tiver permissão
+# se usar o usuário root, fará dump
+# de todos os bancos no servidor
+# em arquivos independentes
+
+# host:usuario:senha:nomedoservidor
+
+# mysql01
+192.168.20.11:user:senha:nomedoservidor
+
+##
+## desativadas/desligadas
+##

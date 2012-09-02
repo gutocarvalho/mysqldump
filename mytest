@@ -1,0 +1,69 @@
+#!/bin/bash
+
+#### variaveis/constantes ###########################################################
+
+BDIR="/caminho/para/mysqldumps"		# diretorio base
+
+DBLIST="$BDIR/mylist.txt"			# list com servidores para dump
+
+BE="mysql|test|information_schema"       	# bancos que nao vao entrar no backup
+
+MYSQLDUMP=$(which mysqldump)			# caminho para comando mysqldump
+MYSQL=$(which mysql)				# caminho para o comando mysql
+
+SEND_ERROR_MAIL="YES"				# envia email com relatorio de erros nos dumps YES/NO
+ERROR_MAIL="usuario@provedor.com.br"		# email para receber relatorios de erro
+
+### verificando se voce é o usuario root ###################################
+
+if [ $(id -u) != "0" ];then
+        echo -e "\nErro: este script precisa ser executado com usuario root..."
+        echo -e "Ajuda: torne-se root, use o comando (su -) ou (sudo -i).\n"
+        exit 1
+fi
+
+### verifica se as ferramentas do mysql estao instalados ####################################
+
+if [ ! -x $MYSQLDUMP ];then
+        echo -e "\nErro: Este script não conseguiu encontrar o comando MYSQLDUMP"
+        echo -e "Ajuda: Corrija o caminho na variavel MYSQLDUMP\n"
+        exit 1
+fi
+
+if [ ! -x $MYSQL ];then
+        echo -e "\nErro: Este script não conseguiu encontrar o comando psql"
+        echo -e "Ajuda: Corrija o caminho na variavel MYSQL\n"
+        exit 1
+fi
+
+### verificando se existe o arquivo com a lista de sgbds #############################
+
+        if [ ! -f $DBLIST ]; then
+                echo -e "\nErro: o arquivo com a lista de sgbds nao existe!"
+                echo -e "Ajuda: ajuste o conteudo da variavel DBLIST\n"
+                exit 1
+        fi
+
+### funcao de backup ##########################################################
+
+function teste() 
+	{
+
+	# pegando infos no arquivo com lista de bancos
+	for DB in `cat $DBLIST |grep -v ^#|grep -v ^$`;do
+		HOST=`echo $DB | cut -d: -f1`
+                USER=`echo $DB | cut -d: -f2`
+                PASS=`echo $DB | cut -d: -f3`
+                NAME=`echo $DB | cut -d: -f4`
+
+		# para debugar um erro de conexao
+		#echo $HOST >> error.txt
+
+		# laco para pegar nome dos bancos
+		for DBBKP in $($MYSQL -h$HOST -u$USER -p$PASS -B -s -e 'show databases;' |egrep -v $BE);do
+	        	echo -e "\nconectado ao ip [ $HOST ] chamado  [ $NAME ] no banco [ $DBBKP ] via usuario [ $USER ] \n"
+		done
+        done
+}
+
+teste
